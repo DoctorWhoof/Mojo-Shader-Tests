@@ -1,0 +1,57 @@
+If you just want to learn about GLSL without a focus on Mojo, I recommend this:
+https://thebookofshaders.com
+
+************************************************** Mojo shaders **************************************************
+
+"Varying"
+
+	Varying properties are always defined in the shader itself, and can be shared between fragment and vertex shaders.
+	They always start with "v_" in mojo shaders.
+
+"Attributes" are user-defined vertex attributes passed by Mojo. Examples:
+	a_Position
+	a_TexCoord0
+	a_TexCoord1
+	a_Color
+	a_Normal
+	a_Tangent
+	a_Weights
+	a_Bones
+
+"Uniforms" are passed by different Mojo classes.
+	Those preceded by "r_" seem to be set by the Renderer. Examples:
+		r_AmbientLight
+		r_BufferCoordScale
+		r_DepthBuffer
+		r_DepthFar
+		r_DepthNear
+		r_LightViewMatrix
+		r_LightRange
+		r_LightColor
+		r_GBufferScale
+		r_GBuffer0
+		r_GBuffer1
+		r_ModelViewMatrix
+		r_ModelViewProjectionMatrix
+		r_ViewportOrigin
+		r_ViewportSize
+		r_ViewportClip
+		r_ShadowCSMTexture
+		r_ShadowCSMSplits
+		r_ShadowMatrix0
+		r_ShadowMatrix1
+		r_ShadowMatrix2
+		r_ShadowMatrix3
+		etc.
+
+	Those preceded by "m_" seem to be set by the material or post-effect. Examples:
+		m_Color
+		m_Near
+		m_Far
+		m_ImageColor
+		m_ImageTexture0
+		m_LightDepth
+		m_SourceTexture
+		m_SourceTextureSize
+		m_SourceTextureScale
+		etc.
