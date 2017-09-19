@@ -22,13 +22,14 @@ Class MyWindow Extends Window
 		img = New Image( 512, 512, TextureFlags.FilterMipmap, testShader )
 		img.Handle = New Vec2f( 0.5 )
 		
+		'The line thickness can be set only once
 		img.Material.SetFloat( "Thickness", thickness)
 	End
 
 	Method OnRender( canvas:Canvas ) Override
 		App.RequestRender()
 		
-		'Here we pass this value to the shader, as "m_Time"!
+		'Here we pass the time value to the shader, as "m_Time", on every frame.
 		Local time := Millisecs()/5000.0 
 		img.Material.SetFloat( "Time", time)
 		
