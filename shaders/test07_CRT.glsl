@@ -21,16 +21,19 @@ void main(){
 uniform sampler2D m_SharpTexture;
 uniform sampler2D m_BlurTexture;
 uniform sampler2D m_Scanlines;
+uniform sampler2D m_Shadowmask;
 
 uniform vec2 m_Resolution;
 uniform float m_ColorBleed;
 uniform float m_GlowSize;
 uniform float m_GlowGain;
-uniform float m_ScanlineFade;
+uniform float m_ScanlineIntensity;
+uniform float m_ShadowMaskIntensity;
 
 void main(){
 	//Scanline texture, mixed with white for fading
-	vec4 scanColor = mix( texture2D( m_Scanlines,v_TexCoord0 * m_Resolution ), vec4(1.0, 1.0, 1.0, 1.0), m_ScanlineFade );
+	vec4 scanColor = mix( vec4(1.0, 1.0, 1.0, 1.0), texture2D( m_Scanlines, v_TexCoord0 * m_Resolution ), m_ScanlineIntensity );
+	vec4 maskColor = mix( vec4(1.0, 1.0, 1.0, 1.0), texture2D( m_Shadowmask, v_TexCoord0 * m_Resolution ), m_ShadowMaskIntensity );
 	
 	//blur offset distance
 	vec2 blurOffset = vec2( m_GlowSize / m_Resolution.x, m_GlowSize / m_Resolution.y );
@@ -48,9 +51,8 @@ void main(){
 	
 	//final color mixing
 	vec4 color = texture2D( m_SharpTexture,v_TexCoord0 );
-	vec4 colorWithGlow = mix( max( color, glow ), color, 1-m_ColorBleed );
-	colorWithGlow += ( glow * m_GlowGain );
-	
-	gl_FragColor= ( colorWithGlow * v_Color ) * scanColor;
+	vec4 colorWithBleed = mix( max( color, glow ), color, 1-m_ColorBleed );
+	vec4 colorWithGlow = colorWithBleed + ( glow * m_GlowGain );
+	gl_FragColor= ( colorWithGlow * v_Color ) * scanColor * maskColor;
 }
 
