@@ -1,7 +1,8 @@
 #Import "<std>"
 #Import "<mojo>"
 #Import "<mojo3d>"
-#Import "shaders/test07_3d.glsl"
+#Import "shaders/material-unlit.glsl"
+#Import "testMaterial"
 
 Using std..
 Using mojo..
@@ -22,7 +23,7 @@ Class MyWindow Extends Window
 		scene = Scene.GetCurrent()
 		scene.ClearColor = Color.DarkGrey
 
-		Local testShader := New Shader( "test06", LoadString("asset::test07_3d.glsl"), "" )
+		Local testShader := New Shader( "test07", LoadString("asset::material-unlit.glsl"), "" )
 
 		img = New Image( 512, 512, TextureFlags.FilterMipmap, testShader )
 		img.Handle = New Vec2f( 0.5 )
@@ -57,36 +58,36 @@ End
 
 
 '********************************* Materials *********************************
-
-
-Class TestMaterial Extends Material
-	
-	Property ColorTexture:Texture()	
-		Return Uniforms.GetTexture( "ColorTexture" )
-	Setter( texture:Texture )
-		Uniforms.SetTexture( "ColorTexture",texture )
-	End
-	
-	Property ColorFactor:Color()
-		Return Uniforms.GetColor( "ColorFactor" )
-	Setter( color:Color )
-		Uniforms.SetColor( "ColorFactor",color )
-	End
-	
-	Method New( shader:Shader )	
-		Super.New( shader )
-		BlendMode=BlendMode.Alpha
-		CullMode=CullMode.None
-		ColorTexture=Texture.ColorTexture( Color.White )
-		ColorFactor = Color.White
-	End
-	
-	Method New( material:TestMaterial )
-		Super.New( material )
-	End
-
-	Method Copy:TestMaterial() Override
-		Return New TestMaterial( Self )
-	End
-	
-End
+'
+'
+'Class TestMaterial Extends Material
+'	
+'	Property ColorTexture:Texture()	
+'		Return Uniforms.GetTexture( "ColorTexture" )
+'	Setter( texture:Texture )
+'		Uniforms.SetTexture( "ColorTexture",texture )
+'	End
+'	
+'	Property ColorFactor:Color()
+'		Return Uniforms.GetColor( "ColorFactor" )
+'	Setter( color:Color )
+'		Uniforms.SetColor( "ColorFactor",color )
+'	End
+'	
+'	Method New( shader:Shader )	
+'		Super.New( shader )
+'		BlendMode=BlendMode.Alpha
+'		CullMode=CullMode.None
+'		ColorTexture=Texture.ColorTexture( Color.White )
+'		ColorFactor = Color.White
+'	End
+'	
+'	Method New( material:TestMaterial )
+'		Super.New( material )
+'	End
+'
+'	Method Copy:TestMaterial() Override
+'		Return New TestMaterial( Self )
+'	End
+'	
+'End

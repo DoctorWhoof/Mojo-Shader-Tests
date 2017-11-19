@@ -25,7 +25,7 @@ float random (vec2 coords) {
 }
 
 void main() {
-	vec2 scaledCoords = v_Coords * 20.0; // Scale the coordinate system by 10
+	vec2 scaledCoords = v_Coords * 40.0; // Scale the coordinate system by 10
 	vec2 intCoords = floor(scaledCoords);  // get the integer coords
 
 	gl_FragColor = vec4( vec3( random( intCoords ) ), 1.0 ) * v_Color;

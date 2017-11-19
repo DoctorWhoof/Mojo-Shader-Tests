@@ -15,7 +15,7 @@ Class MyWindow Extends Window
 	Field style:Int = 0
 
 	Method New()
-		Super.New( "Shader test",1024,600,WindowFlags.Resizable  )
+		Super.New( "Shader test",1024,1024,WindowFlags.Resizable  )
 
 		Local testShader := New Shader( "test06", LoadString("asset::test06_noise.glsl"), "" )
 
@@ -25,8 +25,8 @@ Class MyWindow Extends Window
 
 	Method OnRender( canvas:Canvas ) Override
 		App.RequestRender()
-		img.Material.SetFloat( "Time", Millisecs()/10000.0 )
-		canvas.DrawImage( img, Width/2, Height/2 )
+		img.Material.SetFloat( "Time", Millisecs()/10000000.0 )
+		canvas.DrawImage( img, Width/2, Height/2, 0, App.ActiveWindow.Width / 512.0, App.ActiveWindow.Height / 512.0  )
 	End
 
 End

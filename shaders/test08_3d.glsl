@@ -23,8 +23,8 @@ uniform float m_Time;
 
 void main(){
 	// vec3 color=pow( texture2D( m_ColorTexture,v_TexCoord0 ).rgb,vec3( 2.2 ) ) * m_ColorFactor.rgb;
-	vec3 color = vec3( 1.0, 0.0, 0.0 ) * v_Color;
+	vec4 color = vec4( 1.0, 0.0, 0.0, 1.0 ) * v_Color;
 	float alpha=texture2D( m_ColorTexture, v_TexCoord0 ).a * m_ColorFactor.a;
 
-	gl_FragColor=vec4( color * alpha, alpha );
+	gl_FragColor=vec4( color * alpha );
 }
