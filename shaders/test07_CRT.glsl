@@ -18,41 +18,75 @@ void main(){
 }
 
 //@fragment
-uniform sampler2D m_SharpTexture;
-uniform sampler2D m_BlurTexture;
+uniform sampler2D m_ImageTexture0;
 uniform sampler2D m_Scanlines;
 uniform sampler2D m_Shadowmask;
 
 uniform vec2 m_Resolution;
-uniform float m_ColorBleed;
+
+uniform float m_Mix;
+uniform float m_BlurX;
+uniform float m_BlurY;
+uniform float m_Brightness;
+uniform float m_Gamma;
+
+uniform float m_Bleed;
+uniform float m_BleedSize;
+uniform float m_Glow;
 uniform float m_GlowSize;
-uniform float m_GlowGain;
 uniform float m_ScanlineIntensity;
 uniform float m_ShadowMaskIntensity;
 
+//blur code by Jam3 (https://github.com/Jam3/glsl-fast-gaussian-blur)
+vec4 blur(sampler2D image, vec2 uv, vec2 resolution, vec2 direction) {
+  vec4 color = vec4(0.0);
+  vec2 off1 = vec2(1.3333333333333333) * direction;
+  color += texture2D(image, uv) * 0.29411764705882354;
+  color += texture2D(image, uv + (off1 / resolution)) * 0.35294117647058826;
+  color += texture2D(image, uv - (off1 / resolution)) * 0.35294117647058826;
+  return color; 
+}
+
+vec3 gamma( vec3 value, float g ) {
+  return pow( value, vec3( 1.0 / g ) );
+}
+
+vec4 gamma( vec4 value, float g ) {
+  return vec4( gamma( value.rgb, g ), value.a );
+}
+
+vec4 bleed( vec4 sourceColor, sampler2D image, vec2 uv, vec2 resolution, vec2 direction ){
+	vec4 colorL = texture2D( image, uv + (direction / resolution) );
+	vec4 colorR = texture2D( image, uv - (direction / resolution) );
+	vec4 maxL = max( sourceColor, colorL );
+	vec4 maxR = max( sourceColor, colorR );
+	return mix( maxL, maxR, 0.5);
+}
+
+vec4 edgeglow(sampler2D image, vec2 uv, vec2 resolution, float size ) {
+	vec4 color = texture2D( image, uv );
+	vec4 color1 = bleed( color, image, uv, resolution, vec2( size, 0 ) );
+	vec4 color2 = bleed( color, image, uv, resolution, vec2( size * 0.5, 0 ) );
+	vec4 color3 = bleed( color, image, uv, resolution, vec2( 0, size * 0.5 ) );
+	vec4 effect = max( mix( color1, color2, 0.5 ), color3 );
+	return ( effect - color ) * m_Bleed;
+}
+
 void main(){
-	//Scanline texture, mixed with white for fading
+
 	vec4 scanColor = mix( vec4(1.0, 1.0, 1.0, 1.0), texture2D( m_Scanlines, v_TexCoord0 * m_Resolution ), m_ScanlineIntensity );
 	vec4 maskColor = mix( vec4(1.0, 1.0, 1.0, 1.0), texture2D( m_Shadowmask, v_TexCoord0 * m_Resolution ), m_ShadowMaskIntensity );
+
+	vec4 glow = blur( m_ImageTexture0, v_TexCoord0, m_Resolution, vec2( m_GlowSize, 0.0 ) ) * m_Glow;
+	glow += edgeglow( m_ImageTexture0, v_TexCoord0, m_Resolution, m_BleedSize );
+
+	vec4 color = texture2D( m_ImageTexture0, v_TexCoord0 );
 	
-	//blur offset distance
-	vec2 blurOffset = vec2( m_GlowSize / m_Resolution.x, m_GlowSize / m_Resolution.y );
-	
-	//blur in four directions based on offset
-	vec2 leftCoord = vec2( v_TexCoord0.x - blurOffset.x, v_TexCoord0.y );
-	vec2 rightCoord = vec2( v_TexCoord0.x + blurOffset.x, v_TexCoord0.y );
-	vec2 topCoord = vec2( v_TexCoord0.x, v_TexCoord0.y + blurOffset.y );
-	vec2 bottomCoord = vec2( v_TexCoord0.x, v_TexCoord0.y - blurOffset.y );
-	
-	//blur colors are mixed for final glow color using BlurTexture
-	vec4 glowX = mix( texture2D( m_BlurTexture,rightCoord ), texture2D( m_BlurTexture,leftCoord ), 0.5 );
-	vec4 glowY = mix( texture2D( m_BlurTexture,topCoord ), texture2D( m_BlurTexture,bottomCoord ), 0.5 );
-	vec4 glow = mix( glowX, glowY, 0.5 );
-	
-	//final color mixing
-	vec4 color = texture2D( m_SharpTexture,v_TexCoord0 );
-	vec4 colorWithBleed = mix( max( color, glow ), color, 1-m_ColorBleed );
-	vec4 colorWithGlow = colorWithBleed + ( glow * m_GlowGain );
-	gl_FragColor= ( colorWithGlow * v_Color ) * scanColor * maskColor;
+	vec4 colorBlur = blur( m_ImageTexture0, v_TexCoord0, m_Resolution, vec2( m_BlurX, 0 ) );
+	colorBlur = mix( color, blur( m_ImageTexture0, v_TexCoord0, m_Resolution, vec2( 0, m_BlurY ) ), 0.5 );
+
+	vec4 colorWithEffects = gamma( ( ( colorBlur * v_Color * scanColor * maskColor ) + glow ) * m_Brightness, m_Gamma );
+
+	gl_FragColor = mix( color, colorWithEffects, m_Mix );
 }
 
