@@ -1,6 +1,4 @@
 //blur code by Jam3 (https://github.com/Jam3/glsl-fast-gaussian-blur)
-//luma code by hughsk (https://github.com/hughsk/glsl-luma)
-
 vec4 blur(sampler2D image, vec2 uv, vec2 resolution, vec2 direction) {
   vec4 color = vec4(0.0);
   vec2 off1 = vec2(1.411764705882353) * direction;
@@ -16,15 +14,38 @@ vec4 blur(sampler2D image, vec2 uv, vec2 resolution, vec2 direction) {
   return color;
 }
 
+//luma code by hughsk (https://github.com/hughsk/glsl-luma)
 float luma( vec3 color) {
   return dot( color, vec3(0.299, 0.587, 0.114 ) );
 }
 
+//saturation code from Cesium (https://github.com/AnalyticalGraphicsInc/cesium)
 vec3 saturation( vec3 rgb, float value ){
     const vec3 W = vec3(0.2125, 0.7154, 0.0721);
     vec3 intensity = vec3(dot(rgb, W));
     return mix(intensity, rgb, value);
 }
+
+//https://gist.github.com/aferriss/9be46b6350a08148da02559278daa244
+//use like: vec3 col = finalLevels(someTex.rgb, 34.0/255.0, 1.5, 235.0/255.0);
+vec3 gammaCorrect(vec3 color, float gamma){
+    return pow(color, vec3(1.0/gamma));
+}
+vec3 levelRange(vec3 color, float minInput, float maxInput){
+    return min(max(color - vec3(minInput), vec3(0.0)) / (vec3(maxInput) - vec3(minInput)), vec3(1.0));
+}
+vec3 finalLevels(vec3 color, float minInput, float gamma, float maxInput){
+    return gammaCorrect(levelRange(color, minInput, maxInput), gamma);
+}
+
+//contrast code by Alain Galvan (http://alaingalvan.tumblr.com/post/79864187609/glsl-color-correction-shaders)
+vec3 brightnessContrast( vec3 value, float brightness, float contrast){
+    return  ( (value - 0.5) * contrast + 0.5 ) * brightness;
+}
+
+
+//*********************** All the rest coded by me! Look ma, I know shaders now! *********************** 
+
 
 vec3 glow( sampler2D image, vec2 uv, float glowRadius, vec2 res ){
 	vec3 result = vec3( 0.0, 0.0, 0.0 );
@@ -73,22 +94,6 @@ vec3 nearestX( sampler2D image, vec2 uv, vec2 res ){
 float scanline( float y, float res, float power ){
 	res = ( 3.14159 * res );
  	return pow( abs( sin(y*res) ), power );
-}
-
-vec3 brightnessContrast( vec3 value, float brightness, float contrast){
-    return  ( (value - 0.5) * contrast + 0.5 ) * brightness;
-}
-
-//https://gist.github.com/aferriss/9be46b6350a08148da02559278daa244
-//use like: vec3 col = finalLevels(someTex.rgb, 34.0/255.0, 1.5, 235.0/255.0);
-vec3 gammaCorrect(vec3 color, float gamma){
-    return pow(color, vec3(1.0/gamma));
-}
-vec3 levelRange(vec3 color, float minInput, float maxInput){
-    return min(max(color - vec3(minInput), vec3(0.0)) / (vec3(maxInput) - vec3(minInput)), vec3(1.0));
-}
-vec3 finalLevels(vec3 color, float minInput, float gamma, float maxInput){
-    return gammaCorrect(levelRange(color, minInput, maxInput), gamma);
 }
 
 // Experimental. Returns a curve that smoothly rises to a value as x increases, then smoothly decreases.
