@@ -15,7 +15,7 @@ Class MyWindow Extends Window
 
 	Field img :Image
 	Field scale :Vec2f
-	Field integerScaling:= False
+	Field integerScaling:= True
 	
 	Field mix := 1.0
 	Field brightness := 0.8
@@ -24,7 +24,7 @@ Class MyWindow Extends Window
 	
 	Field border := 0.02
 	Field borderFade := 0.0075
-	Field curve := New Vec2f( 0.02, 0.02 )
+	Field curve := New Vec2f( 0.015, 0.015 )
 
 	Field filterX := 1
 	Field filterY := 0	'not working yet!
@@ -33,10 +33,10 @@ Class MyWindow Extends Window
 	Field scanlineMinPower := 0.5
 	Field scanlineMaxPower := 1.0
 	
-	Field mask := 0.25
+	Field mask := 0.5
 	Field maskSize := 1.0
 	
-	Field glow := 0.25
+	Field glow := 0.3
 	Field glowSize := 2.0
 
 	Method New()
@@ -95,7 +95,7 @@ Class MyWindow Extends Window
 		End
 
 		If integerScaling
-			scale = New Vec2f( Ceil( Width/img.Width), Ceil(Height/img.Height) )
+			scale = New Vec2f( Floor( Width/img.Width), Floor(Height/img.Height) )
 		Else
 			scale = New Vec2f( Width/img.Width, Height/img.Height)
 		End
