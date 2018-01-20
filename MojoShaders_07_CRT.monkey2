@@ -44,7 +44,7 @@ Class MyWindow Extends Window
 		ClearColor = Color.Black
 		
 		Local testShader := New Shader( "test08", LoadString("asset::test07_CRT.glsl"), "" )
-		img = Image.Load( "asset::frame.png", testShader, TextureFlags.FilterMipmap )
+		img = Image.Load( "asset::pixelGrid.png", testShader, TextureFlags.FilterMipmap )
 		img.Handle = New Vec2f(0.5)
 		
 		Local texMask := Texture.Load( "asset::shadowMaskBright32px.png", TextureFlags.FilterMipmap | TextureFlags.WrapST )
