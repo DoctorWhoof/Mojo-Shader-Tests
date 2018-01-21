@@ -102,9 +102,11 @@ Class MyWindow Extends Window
 		
 		canvas.DrawImage( img, Width/2, Height/2, 0, scale.Y, scale.Y )
 		canvas.Color = Color.Black
-		canvas.DrawRect(0,0,120,24)
+		
+		Local  text := App.FPS + " fps;  Mix: " + mix + "      (Hit spacebar to toggle)"
+		canvas.DrawRect(10,10,canvas.Font.TextWidth(text), canvas.Font.Height )
 		canvas.Color = Color.White
-		canvas.DrawText( App.FPS + " fps;  Mix: " + mix, 5, 5 )
+		canvas.DrawText( text, 10, 10 )
 	End
 
 End
