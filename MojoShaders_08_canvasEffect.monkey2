@@ -20,14 +20,21 @@ Class MyWindow Extends Window
 	Field img :Image
 	Field testShader :Shader
 	Field textureCanvas: Canvas	
+	Field fullScreenShader: Shader
 	
 	Field res :Vec2i
-	Field aspect: Float
+	Field previousRes:Vec2i
+	
+	Field originalAspect: Float
+	Field currentAspect: Float
 	
 	'Main shader paramters. Passed to the shader via the image.
 	Field vignetteIntensity:= 0.5
 	Field vignetteSpread := 0.2
-	Field blurIntensity:= 6.0
+	
+	Field blurIntensity:= 20.0
+	Field blurSpread := 1.0
+	Field blurSamples := 8.0
 	
 	'keyboard controls
 	Field bypass:= 0.0
@@ -35,13 +42,21 @@ Class MyWindow Extends Window
 
 	Method New()
 		'Create window, set window related parameters
-		Super.New( "Shader test",1024,768,WindowFlags.Resizable | WindowFlags.HighDPI )
+		Super.New( "Shader test",1920,1080,WindowFlags.Resizable | WindowFlags.HighDPI )
 		res = New Vec2i( Width, Height )
-		aspect = Float(res.x) / Float(res.y)
+		originalAspect = Float(res.x) / Float(res.y)
 		Layout = "fill"
 		
-		'Our shader.
-		Local fullScreenShader := New Shader( "test08", LoadString("asset::test08_canvasEffect.glsl"), "" )	
+		fullScreenShader = New Shader( "test08", LoadString("asset::test08_canvasEffect.glsl"), "" )	
+		
+		'Create a bunch of bouncing circles!
+		For Local n := 1 To 50
+			Local circle := New Circle( Rnd(100,Width-100), Rnd(0,Height-100) )
+		Next
+	End
+	
+	
+	Method CreateImageCanvas()
 		'Image using the shader. Uses "Dynamic" flags because it is updated on every frame.
 		img = New Image( res.X, res.Y, TextureFlags.FilterMipmap | TextureFlags.Dynamic, fullScreenShader )
 		'Shader params
@@ -49,14 +64,13 @@ Class MyWindow Extends Window
 		img.Material.SetFloat( "Vignette", 1.0 - vignetteIntensity )
 		img.Material.SetFloat( "VignetteSpread", vignetteSpread )
 		img.Material.SetFloat( "Blur", blurIntensity )
+		img.Material.SetFloat( "BlurSpread", blurSpread )
+		img.Material.SetFloat( "BlurSamples", blurSamples )	'not working?
 		'The texture canvas the circles will be draw to
 		textureCanvas = New Canvas( img )
-		
-		'Create a bunch of bouncing circles!
-		For Local n := 1 To 50
-			Local circle := New Circle( Rnd(100,Width-100), Rnd(0,Height-100) )
-		Next
+		Print ( "New Texture Canvas: " + res )
 	End
+	
 	
 	'Main drawing loop.
 	Method OnRender( canvas:Canvas ) Override
@@ -82,13 +96,12 @@ Class MyWindow Extends Window
 		textureCanvas.Flush()
 		
 		'Draw To main canvas, preserving original aspect ratio while using all pixels available ("fill" layout)
-		Local currentAspect := Float(Width)/Float(Height)
-		If currentAspect <= aspect
-			Local h :Int= Width / aspect
+		If currentAspect <= originalAspect
+			Local h :Int= Width / originalAspect
 			canvas.DrawRect( 0, (Height - h)/2, Width, h , img )
 			canvas.DrawText( "Effective Resolution: " + Width + "," + h, 10, Height - 20 )
 		Else
-			Local w :Int = Height * aspect
+			Local w :Int = Height * originalAspect
 			canvas.DrawRect( (Width-w)/2, 0, w, Height, img )
 			canvas.DrawText( "Effective Resolution: " + w + "," + Height, 10, Height - 20 )
 		End
@@ -100,9 +113,23 @@ Class MyWindow Extends Window
 		canvas.DrawText( fps, Width-canvas.Font.TextWidth(fps)-10 , 10 )
 	End
 	
-	'Required by letterbox Layout
+
 	Method OnMeasure:Vec2i() Override
-		Return res	
+		'Custom letterbox-fill layout! Uses all pixels, while preserving the aspect ratio.
+		
+		currentAspect = Float(Width)/Float(Height)
+		
+		If Width <> previousRes.x Or Height <> previousRes.y
+			If currentAspect <= originalAspect
+				res = New Vec2i( Width, Width / originalAspect )
+			Else
+				res = New Vec2i( Height * originalAspect, Height )
+			End
+			CreateImageCanvas()
+		End
+		
+		previousRes = New Vec2i( Width, Height )
+		Return res
 	End
 
 End
@@ -153,6 +180,9 @@ Class Circle
 	
 	Method Render( canvas:Canvas )
 		canvas.Color = color
-		canvas.DrawCircle( pos.X, pos.Y , radius )	
+		canvas.DrawCircle( pos.X, pos.Y , radius )
+		canvas.Color = Color.Black
+		canvas.DrawPoint( pos.x, pos.y )
+'		canvas.DrawRect( pos.X, pos.Y , radius, radius )
 	End
 End

@@ -26,29 +26,30 @@ uniform float m_Bypass;
 uniform float m_Vignette;
 uniform float m_VignetteSpread;
 uniform float m_Blur;
+uniform float m_BlurSpread;
+uniform float m_BlurSamples;	//ints not working with mojo? using float for now.
 
 
-vec3 blur( sampler2D image, vec2 uv, float glowRadius, vec2 res, int samples ){
+vec3 blur( sampler2D image, vec2 uv, float radius, vec2 res, int samples ){
 	vec3 result = vec3( 0.0, 0.0, 0.0 );
-	vec2 pixSize = vec2( 1.0/res.x, 1.0/res.y );									//Dimensions for each virtual pixel
-	float glowRadiusUV = glowRadius * pixSize.x;
 	
-	//int samples = int(glowRadius)*2;
-	int halfsamples = samples/2;
-	float sampleCount;
+	vec2 pixSize = vec2( 1.0/res.x, 1.0/res.y );									//Dimensions for each virtual pixel
 
-	for( int x=-halfsamples; x<=halfsamples; x++ ){
-		for( int y=-halfsamples; y<=halfsamples; y++ ){
-			float posX = float(x)/float(halfsamples);
-			float posY = float(y)/float(halfsamples);
-			float xoffset = posX*glowRadius*pixSize.x;
-			float yoffset = posY*glowRadius*pixSize.y;
-			float fade = 1.0 - (abs(posX)*abs(posY));
-			result += ( texture2D( image, vec2( uv.x + xoffset, uv.y + yoffset ) ).rgb * fade );
-			sampleCount += 1.0;
+	if( samples > 1 ) {
+		float sampleCount = 0.0;
+		float sampleStep = 1.0/float(samples-1);
+		for( float x = -0.5; x <= 0.5; x+=sampleStep ){
+			for( float y = -0.5; y <= 0.5; y+=sampleStep ){
+				vec2 offset = vec2( x*pixSize.x*radius, y*pixSize.y*radius );
+				result += ( texture2D( image, vec2( uv.x + offset.x, uv.y + offset.y ) ).rgb );
+				sampleCount += 1.0;
+			}
 		}
+		result *= (1.0/sampleCount);
+	} else {
+		result = texture2D( image, vec2( uv.x, uv.y ) ).rgb;	
 	}
-	return result * (1.0/sampleCount*1.5);
+	return result;
 }
 
 
@@ -63,10 +64,11 @@ void main(){
 	if( m_Bypass < 0.5 ){
 		
 		float maskVignette =  gradient( v_UV.x, 1.0, m_VignetteSpread ) * gradient( v_UV.y, 1.0, m_VignetteSpread );
-		float maskBlur =  gradient( v_UV.x, 1.0, 1.0 ) * gradient( v_UV.y, 1.0, 1.0 );
+		float maskBlur =  1.0 - gradient( v_UV.x, 1.0, m_BlurSpread ) * gradient( v_UV.y, 1.0, m_BlurSpread );
 		float border = smoothstep( 0.35, 0.4, maskVignette );
 	
-		vec3 blurColor = blur( m_ImageTexture0, v_UV, (1.0-maskBlur)*m_Blur, m_Resolution/2.0, 8 );
+		int samples = 2 + int( abs(maskBlur * (m_BlurSamples-2) ) );	//2 is the minimum, m_BlurSamples is the maximum
+		vec3 blurColor = blur( m_ImageTexture0, v_UV, maskBlur*m_Blur+0.25, m_Resolution, samples );
 	
 		gl_FragColor= vec4( blurColor * border * maskVignette, 1.0 );
 		
