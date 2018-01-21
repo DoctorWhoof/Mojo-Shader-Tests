@@ -43,7 +43,7 @@ Class MyWindow Extends Window
 		Super.New( "Shader test",2048,1536, WindowFlags.Resizable | WindowFlags.HighDPI  )
 		ClearColor = Color.Black
 		
-		Local testShader := New Shader( "test08", LoadString("asset::test07_CRT.glsl"), "" )
+		Local testShader := New Shader( "test07", LoadString("asset::test07_CRT.glsl"), "" )
 		img = Image.Load( "asset::pixelGrid.png", testShader, TextureFlags.FilterMipmap )
 		img.Handle = New Vec2f(0.5)
 		
