@@ -28,14 +28,14 @@ uniform float m_VignetteSpread;
 uniform float m_Blur;
 
 
-vec3 blur( sampler2D image, vec2 uv, float glowRadius, vec2 res ){
+vec3 blur( sampler2D image, vec2 uv, float glowRadius, vec2 res, int samples ){
 	vec3 result = vec3( 0.0, 0.0, 0.0 );
 	vec2 pixSize = vec2( 1.0/res.x, 1.0/res.y );									//Dimensions for each virtual pixel
-
 	float glowRadiusUV = glowRadius * pixSize.x;
-	int samples = int(glowRadius)*2;
+	
+	//int samples = int(glowRadius)*2;
 	int halfsamples = samples/2;
-	float passes;
+	float sampleCount;
 
 	for( int x=-halfsamples; x<=halfsamples; x++ ){
 		for( int y=-halfsamples; y<=halfsamples; y++ ){
@@ -45,36 +45,36 @@ vec3 blur( sampler2D image, vec2 uv, float glowRadius, vec2 res ){
 			float yoffset = posY*glowRadius*pixSize.y;
 			float fade = 1.0 - (abs(posX)*abs(posY));
 			result += ( texture2D( image, vec2( uv.x + xoffset, uv.y + yoffset ) ).rgb * fade );
-			passes += 1.0;
+			sampleCount += 1.0;
 		}
 	}
-	return result * (1.0/passes);
+	return result * (1.0/sampleCount*1.5);
 }
+
 
 float gradient( float y, float size, float power ){
 	size = ( 3.14159 * size );
  	return pow( abs( sin(y*size) ), power );
 }
 
-
 void main(){
 #if MX2_RENDERPASS==0
-	//float blurValue = 3.0;
 
-	//vec2 uv_R = vec2( v_UV.x)
-	vec3 glowColor = blur( m_ImageTexture0, v_UV, m_Blur, m_Resolution/m_Blur );
-	vec3 color = texture2D( m_ImageTexture0, vec2( v_UV.x, v_UV.y) ).rgb;
-	
-	float maskX =  gradient( v_UV.x, 1.0, 2.0 );
-	float maskY =  gradient( v_UV.y, 1.0, 2.0 );
-	
-	vec3 finalColor = mix( glowColor, color, maskX * maskY );
-	finalColor = mix( vec3(0), finalColor, pow( (maskX * maskY), m_VignetteSpread ) );
-	
 	if( m_Bypass < 0.5 ){
-		gl_FragColor=vec4( finalColor, 1.0 );
+		
+		float maskVignette =  gradient( v_UV.x, 1.0, m_VignetteSpread ) * gradient( v_UV.y, 1.0, m_VignetteSpread );
+		float maskBlur =  gradient( v_UV.x, 1.0, 1.0 ) * gradient( v_UV.y, 1.0, 1.0 );
+		float border = smoothstep( 0.35, 0.4, maskVignette );
+	
+		vec3 blurColor = blur( m_ImageTexture0, v_UV, (1.0-maskBlur)*m_Blur, m_Resolution/2.0, 8 );
+	
+		gl_FragColor= vec4( blurColor * border * maskVignette, 1.0 );
+		
 	} else {
+	
+		vec3 color = texture2D( m_ImageTexture0, vec2( v_UV.x, v_UV.y) ).rgb;
 		gl_FragColor=vec4( color, 1.0 );
+		
 	}
 #else
 	gl_FragColor=vec4( 0.0, 0.0, 0.0, 1.0 );

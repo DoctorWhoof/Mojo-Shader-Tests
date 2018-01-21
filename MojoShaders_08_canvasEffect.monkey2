@@ -20,10 +20,12 @@ Class MyWindow Extends Window
 	Field img :Image
 	Field testShader :Shader
 	Field textureCanvas: Canvas	
+	
 	Field res :Vec2i
+	Field aspect: Float
 	
 	'Main shader paramters. Passed to the shader via the image.
-	Field vignetteIntensity:= 1.0
+	Field vignetteIntensity:= 0.5
 	Field vignetteSpread := 0.2
 	Field blurIntensity:= 6.0
 	
@@ -33,9 +35,10 @@ Class MyWindow Extends Window
 
 	Method New()
 		'Create window, set window related parameters
-		Super.New( "Shader test",1024,768,WindowFlags.Resizable )
+		Super.New( "Shader test",1024,768,WindowFlags.Resizable | WindowFlags.HighDPI )
 		res = New Vec2i( Width, Height )
-		Layout = "letterbox"
+		aspect = Float(res.x) / Float(res.y)
+		Layout = "fill"
 		
 		'Our shader.
 		Local fullScreenShader := New Shader( "test08", LoadString("asset::test08_canvasEffect.glsl"), "" )	
@@ -57,6 +60,7 @@ Class MyWindow Extends Window
 	
 	'Main drawing loop.
 	Method OnRender( canvas:Canvas ) Override
+		App.RequestRender()
 		
 		'bypass shader with spacebar
 		If Keyboard.KeyHit( Key.Space )
@@ -69,7 +73,7 @@ Class MyWindow Extends Window
 		End
 
 		'Draw to texture canvas
-		textureCanvas.Clear( Color.Grey )
+		textureCanvas.Clear( Color.DarkGrey )
 		img.Material.SetFloat( "Bypass", bypass )
 		For Local circle := Eachin Circle.all
 			If Not paused Then circle.Update( textureCanvas )
@@ -77,14 +81,23 @@ Class MyWindow Extends Window
 		Next
 		textureCanvas.Flush()
 		
-		'Draw To main canvas
-		canvas.DrawImage( img, 0, 0 )
-		canvas.DrawText( "Hit spacebar to toggle shader on/off", 10, 10 )
+		'Draw To main canvas, preserving original aspect ratio while using all pixels available ("fill" layout)
+		Local currentAspect := Float(Width)/Float(Height)
+		If currentAspect <= aspect
+			Local h :Int= Width / aspect
+			canvas.DrawRect( 0, (Height - h)/2, Width, h , img )
+			canvas.DrawText( "Effective Resolution: " + Width + "," + h, 10, Height - 20 )
+		Else
+			Local w :Int = Height * aspect
+			canvas.DrawRect( (Width-w)/2, 0, w, Height, img )
+			canvas.DrawText( "Effective Resolution: " + w + "," + Height, 10, Height - 20 )
+		End
 		
+		'Draw extra info
+		canvas.DrawText( "Hit spacebar to toggle shader on/off, 'P' to pause", 10, 10 )
+	
 		Local fps := "FPS:" + App.FPS
 		canvas.DrawText( fps, Width-canvas.Font.TextWidth(fps)-10 , 10 )
-		
-		App.RequestRender()
 	End
 	
 	'Required by letterbox Layout
