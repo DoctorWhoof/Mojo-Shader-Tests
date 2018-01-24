@@ -56,22 +56,6 @@ Class MyWindow Extends Window
 	End
 	
 	
-	Method CreateImageCanvas()
-		'Image using the shader. Uses "Dynamic" flags because it is updated on every frame.
-		img = New Image( res.X, res.Y, TextureFlags.FilterMipmap | TextureFlags.Dynamic, fullScreenShader )
-		'Shader params
-		img.Material.SetVec2f( "Resolution", New Vec2f( res.X, res.Y ) )
-		img.Material.SetFloat( "Vignette", 1.0 - vignetteIntensity )
-		img.Material.SetFloat( "VignetteSpread", vignetteSpread )
-		img.Material.SetFloat( "Blur", blurIntensity )
-		img.Material.SetFloat( "BlurSpread", blurSpread )
-		img.Material.SetFloat( "BlurSamples", blurSamples )	'not working?
-		'The texture canvas the circles will be draw to
-		textureCanvas = New Canvas( img )
-		Print ( "New Texture Canvas: " + res )
-	End
-	
-	
 	'Main drawing loop.
 	Method OnRender( canvas:Canvas ) Override
 		App.RequestRender()
@@ -113,10 +97,25 @@ Class MyWindow Extends Window
 		canvas.DrawText( fps, Width-canvas.Font.TextWidth(fps)-10 , 10 )
 	End
 	
-
+	
+	Method CreateImageCanvas()
+		'Image using the shader. Uses "Dynamic" flags because it is updated on every frame.
+		img = New Image( res.X, res.Y, TextureFlags.FilterMipmap | TextureFlags.Dynamic, fullScreenShader )
+		'Shader params
+		img.Material.SetVec2f( "Resolution", New Vec2f( res.X, res.Y ) )
+		img.Material.SetFloat( "Vignette", 1.0 - vignetteIntensity )
+		img.Material.SetFloat( "VignetteSpread", vignetteSpread )
+		img.Material.SetFloat( "Blur", blurIntensity )
+		img.Material.SetFloat( "BlurSpread", blurSpread )
+		img.Material.SetFloat( "BlurSamples", blurSamples )	'not working?
+		'The texture canvas the circles will be draw to
+		textureCanvas = New Canvas( img )
+		Print ( "New Texture Canvas: " + res )
+	End
+	
+	'This method is called whenever the window changes size / is created
 	Method OnMeasure:Vec2i() Override
-		'Custom letterbox-fill layout! Uses all pixels, while preserving the aspect ratio.
-		
+
 		currentAspect = Float(Width)/Float(Height)
 		
 		If Width <> previousRes.x Or Height <> previousRes.y
